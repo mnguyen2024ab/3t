@@ -6,7 +6,7 @@
     "user": {
       "id": "101",
       "username": "bunnyFan",
-      "email": "user101@example.com"
+      "email": "something@gmail.com"
     },
     "nrOfLikes": [{"count": 224}],
     "nrOfComments": [{"count": 342}],
@@ -19,7 +19,7 @@
     "user": {
       "id": "102",
       "username": "dreamerElephant",
-      "email": "user102@example.com"
+      "email": "something1@gmail.com"
     },
     "nrOfLikes": [{"count": 702}],
     "nrOfComments": [{"count": 872}],
@@ -32,7 +32,7 @@
     "user": {
       "id": "103",
       "username": "actionKing",
-      "email": "user103@example.com"
+      "email": "something2@gmail.com"
     },
     "nrOfLikes": [{"count": 298}],
     "nrOfComments": [{"count": 292}],
@@ -45,7 +45,7 @@
     "user": {
       "id": "104",
       "username": "escapeArtist",
-      "email": "user104@example.com"
+      "email": "something3@gmail.com"
     },
     "nrOfLikes": [{"count": 792}],
     "nrOfComments": [{"count": 532}],
@@ -58,7 +58,7 @@
     "user": {
       "id": "105",
       "username": "funSeeker",
-      "email": "user105@example.com"
+      "email": "something4@gmail.com"
     },
     "nrOfLikes": [{"count": 912}],
     "nrOfComments": [{"count": 952}],
