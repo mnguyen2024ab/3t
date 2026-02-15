@@ -3,12 +3,17 @@ import { Entypo, Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 
 export default function TabsLayout() {
     return (
-        <Tabs>
+        <Tabs screenOptions={{
+            tabBarActiveTintColor: '#ffffff',
+            headerShown: false,
+            tabBarStyle: {
+                backgroundColor: '#000000',
+            }
+        }}>
             <Tabs.Screen
                 name='index'
                 options={{
                     title: 'Home',
-                    headerShown: false,
                     tabBarIcon: ({ color }) => (
                         <Entypo name="home" size={24} color={color} />
                     )
