@@ -3,7 +3,7 @@ import { useVideoPlayer, VideoView } from 'expo-video';
 import { Ionicons } from '@expo/vector-icons';
 import { Post } from '@/types/types';
 import {useFocusEffect} from "expo-router";
-import {useCallback} from "react";
+import {useEffect} from "react";
 
 
 type VideoListItemProps = {
@@ -17,30 +17,27 @@ export default function PostListItem({ postItem, isActive }:  VideoListItemProps
     const player = useVideoPlayer(video_url, player => {
         player.loop = true;
     });
-    useFocusEffect(
-        useCallback(() => {
-            if (!player) return;
+    useEffect(() => {
+        if (!player) return;
 
+        try {
+            if (isActive) {
+                player.play()
+            }
+        } catch (error) {
+            console.log(error);
+        }
+
+        return () => {
             try {
-                if (isActive) {
-                    player.play()
+                if (player) {
+                    player.pause()
                 }
             } catch (error) {
                 console.log(error);
             }
-
-            return () => {
-                try {
-                    if (player) {
-                        player.pause()
-                    }
-                } catch (error) {
-                    console.log(error);
-                }
-            }
-        }, [isActive, player])
-
-    )
+        }
+    }, [isActive, player])
     return (
         <View style={{ height: height -80 }}>
             <VideoView
@@ -71,7 +68,7 @@ export default function PostListItem({ postItem, isActive }:  VideoListItemProps
               </TouchableOpacity>
           </View>
          <View style={styles.videoInfo}>
-           <Text style={styles.username}>{user.username}</Text>
+           <Text style={styles.username}>{user?.username ?? 'Unknown'}</Text>
            <Text style={styles.description}>{description}</Text>
          </View>
         </View>

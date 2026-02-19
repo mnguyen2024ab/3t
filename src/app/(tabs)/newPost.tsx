@@ -1,9 +1,21 @@
-import {View, Text, Button, StyleSheet, TouchableOpacity} from 'react-native';
+import {
+    View,
+    Text,
+    Button,
+    StyleSheet,
+    TouchableOpacity,
+    TextInput,
+    KeyboardAvoidingView,
+    Platform
+} from 'react-native';
 import { CameraView, CameraType, useCameraPermissions, useMicrophonePermissions } from 'expo-camera';
 import {useEffect, useRef, useState} from "react";
 import * as Linking from 'expo-linking';
 import {Ionicons} from "@expo/vector-icons";
 import { router } from 'expo-router';
+import {useVideoPlayer, VideoView} from "expo-video";
+import {SafeAreaView} from "react-native-safe-area-context";
+import * as ImagePicker from 'expo-image-picker';
 
 
 export default function NewPostScreen() {
@@ -12,6 +24,13 @@ export default function NewPostScreen() {
     const [isRecording, setIsRecording] = useState<boolean>(false);
     const cameraRef = useRef<CameraView>(null)
     const [micPermission, requestMicPermission] = useMicrophonePermissions();
+    const [recordedUri, setRecordedUri] = useState<string | null>(null);
+    const [video, setVideo] = useState<string>();
+    const [description, setDescription] = useState<string>('');
+
+    const videoPlayer = useVideoPlayer("https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4", (player) => {
+        player.loop = true;
+    })
 
     useEffect(() => {
         (async () => {
@@ -28,22 +47,47 @@ export default function NewPostScreen() {
 
     if (!permission || !micPermission) {
         // Camera permissions are still loading.
-        return <View />;
+        return <View/>;
     }
 
     if ((permission && !permission.granted && !permission.canAskAgain) || (micPermission && !micPermission.granted && !micPermission.canAskAgain)) {
-           return (
-               <View style={styles.permissionContainer}>
-                 <Text style={styles.permissionText}>We need your permission to use the camera and microphone</Text>
-                   <Button title='Grant Permission' onPress={() => Linking.openSettings()}/>
-               </View>
-           )
-       }
-       const toggleCameraFacing = () => setFacing(facing === 'back' ? 'front' : 'back');
+        return (
+            <View style={styles.permissionContainer}>
+                <Text style={styles.permissionText}>We need your permission to use the camera and microphone</Text>
+                <Button title='Grant Permission' onPress={() => Linking.openSettings()}/>
+            </View>
+        )
+    }
+    const toggleCameraFacing = () => setFacing(facing === 'back' ? 'front' : 'back');
 
-       const selectFromGallery = () => {
+    const selectFromGallery = async () => {
+        const {status} = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (status !== 'granted') {
+            alert('Sorry, we need camera roll permissions to make this work!');
+            return;
+        }
 
-       }
+        let result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Videos,
+            allowsEditing: true,
+            quality: 1,
+        });
+
+        if (!result.canceled && result.assets && result.assets.length > 0) {
+            const uri = result.assets[0].uri;
+            setRecordedUri(uri);
+            router.push({pathname: '/(tabs)/newPost', params: {uri}}); // Placeholder for navigation
+        }
+    }
+
+    const dismissVideo = () => {
+        setVideo(undefined);
+        videoPlayer.release()
+    }
+
+    const postVideo = () => {
+
+    }
 
     const stopRecording = () => {
         setIsRecording(false);
@@ -52,33 +96,89 @@ export default function NewPostScreen() {
 
     const startRecording = async () => {
         setIsRecording(true);
-        const recordedVideo = await cameraRef.current?.recordAsync();
-        if (recordedVideo?.uri) {
-            const uri = recordedVideo.uri
-
+        try {
+            const recordedVideo = await cameraRef.current?.recordAsync();
+            if (recordedVideo?.uri) {
+                const uri = recordedVideo.uri;
+                setVideo(uri);
+                await videoPlayer.replaceAsync({ uri })
+                videoPlayer.play();
+            }
+        } catch (error) {
+            console.error("Failed to record video:", error);
+            setIsRecording(false);
         }
     };
+
+    const renderCamera = () => {
+        return (
+            <View style={{flex: 1}}>
+                <CameraView mode='video' ref={cameraRef} style={{flex: 1}} facing={facing}/>
+                <View style={styles.topBar}>
+                    <Ionicons name="close" size={40} color="white" onPress={() => router.back()}/>
+                </View>
+                <View style={styles.bottomControls}>
+                    <Ionicons name="images" size={40} color="white" onPress={selectFromGallery}/>
+
+                    <TouchableOpacity
+                        style={[
+                            styles.recordButton,
+                            isRecording && styles.recordingButton,
+                        ]}
+                        onPress={isRecording ? stopRecording : startRecording}
+                    />
+
+                    <Ionicons name="camera-reverse" size={40} color="white" onPress={toggleCameraFacing}/>
+                </View>
+            </View>
+        )
+    };
+
+const renderRecordedVideo = () => {
     return (
-        <View style={{flex: 1}}>
-            <CameraView ref={cameraRef} style={{flex: 1}} facing={facing}/>
-              <View style={styles.tobBar}>
-                  <Ionicons name="close" size={40} color="white" onPress={() => router.back()} />
-              </View>
-                    <View style={styles.bottomControls}>
-                        <Ionicons name="images" size={40} color="white" onPress={selectFromGallery} />
-
-                        <TouchableOpacity
-                            style={[
-                                styles.recordButton,
-                                isRecording && styles.recordingButton,
-                            ]}
-                            onPress={isRecording ? stopRecording : startRecording}
-                        />
-
-                        <Ionicons name="camera-reverse" size={40} color="white" onPress={toggleCameraFacing} />
-                    </View>
-        </View>
+        <SafeAreaView style={{ flex: 1 }} edges={['bottom']}>
+            <Ionicons
+                name="close"
+                size={32}
+                color="white"
+                onPress={dismissVideo}
+                style={styles.closeIcon}
+            />
+           <View style={styles.videoWrapper}>
+              <VideoView
+                  player={videoPlayer}
+                  contentFit="cover"
+                  style={styles.video}
+              />
+           </View>
+            <KeyboardAvoidingView
+                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+                style={styles.descriptionContainer}
+                keyboardVerticalOffset={20}
+            >
+            <TextInput
+               style={styles.input}
+               placeholder="Add a description..."
+               placeholderTextColor="#aaa"
+               multiline
+               value={description}
+               onChangeText={setDescription}
+            />
+            <TouchableOpacity
+                style={styles.postButton}
+                onPress={postVideo}
+            >
+                <Text style={styles.postText}>Post</Text>
+            </TouchableOpacity>
+            </KeyboardAvoidingView>
+        </SafeAreaView>
     )
+};
+return (
+    <>
+        { renderRecordedVideo}
+    </>
+)
 }
 
 const styles = StyleSheet.create({
@@ -102,7 +202,7 @@ const styles = StyleSheet.create({
     recordingButton: {
         backgroundColor: '#F44336'
     },
-    tobBar: {
+    topBar: {
         position: 'absolute',
         top: 55,
         left: 15
@@ -115,4 +215,44 @@ const styles = StyleSheet.create({
         justifyContent: 'space-around',
         width: '100%'
     },
+    closeIcon: {
+        position: 'absolute',
+        top: 50,
+        left: 20,
+        zIndex: 1
+    },
+    video: {
+        aspectRatio: 9 / 16
+    },
+    input: {
+        flex: 1,
+        color: 'white',
+        backgroundColor: '#111',
+        borderRadius: 10,
+        paddingVertical: 15,
+        paddingHorizontal: 10,
+        maxHeight: 110
+    },
+    postText: {
+        color: '#fff',
+        fontSize: 17,
+        fontWeight: '700',
+        textAlign: 'center'
+    },
+    postButton: {
+        backgroundColor: '#FF0050',
+        paddingHorizontal: 15,
+        paddingVertical: 10,
+        borderRadius: 10,
+    },
+    videoWrapper: {
+        flex: 1
+    },
+    descriptionContainer: {
+        paddingHorizontal: 5,
+        flexDirection: 'row',
+        gap: 10,
+        marginBottom: 15
+    }
 });
+
