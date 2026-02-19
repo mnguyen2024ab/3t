@@ -69,9 +69,14 @@ export default function NewPostScreen() {
 
         if (!result.canceled ) {
             const uri = result.assets[0].uri;
-            setVideo(uri);
-            await videoPlayer.replaceAsync({ uri })
-            videoPlayer.play();
+            try {
+                await videoPlayer.replaceAsync({ uri });
+                videoPlayer.play();
+                setVideo(uri);
+            } catch (error) {
+                console.error("Failed to load video from gallery:", error);
+                alert("Failed to load video. Please try again.");
+            }
         }
     }
 
