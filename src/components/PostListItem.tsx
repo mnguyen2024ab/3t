@@ -16,7 +16,6 @@ export default function PostListItem({ postItem, isActive }:  VideoListItemProps
 
     const player = useVideoPlayer(video_url, player => {
         player.loop = true;
-        player.play();
     });
     useFocusEffect(
         useCallback(() => {
@@ -25,7 +24,6 @@ export default function PostListItem({ postItem, isActive }:  VideoListItemProps
             try {
                 if (isActive) {
                     player.play()
-
                 }
             } catch (error) {
                 console.log(error);
@@ -33,7 +31,7 @@ export default function PostListItem({ postItem, isActive }:  VideoListItemProps
 
             return () => {
                 try {
-                    if (player && isActive) {
+                    if (player) {
                         player.pause()
                     }
                 } catch (error) {

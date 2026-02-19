@@ -29,7 +29,7 @@ export default function TabsLayout() {
                 name='newPost'
                 options={{
                     title: 'New Post',
-                    headerShown: true,
+                    headerShown: false,
                     tabBarIcon: ({ color }) => (
                         <Feather name="plus-square" size={24} color={color} />
                     )
