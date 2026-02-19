@@ -1,7 +1,7 @@
 import { View, FlatList, Dimensions, ViewToken, StyleSheet } from 'react-native';
 import PostListItem from '@components/PostListItem';
 import posts from '@assets/data/posts.json';
-import {useRef, useState} from "react";
+import {useMemo, useRef, useState} from "react";
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import FeedTab from "@components/GenericComponents/FeedTab";
 
@@ -15,6 +15,17 @@ export default function HomeScreen() {
     const { height } = Dimensions.get('window');
     const [currentIndex, setCurrentIndex] = useState(0);
     const [activeTab, setActiveTab] = useState(TABS.FOR_YOU);
+
+    const filteredPosts = useMemo(() => {
+        if (activeTab === TABS.FOR_YOU) {
+            return posts;
+        }
+        if (activeTab === TABS.FOLLOWING) {
+            // Placeholder: filter posts by following users (assuming there's a property for this, or just return empty for now)
+            return posts.filter(post => post.user.username === 'danho'); // Example filtering
+        }
+        return posts;
+    }, [activeTab]);
 
     const onViewableItemsChanged = useRef(({ viewableItems }: { viewableItems: ViewToken[] }) => {
         if (viewableItems.length > 0 ) {
@@ -34,9 +45,8 @@ export default function HomeScreen() {
                 <Ionicons name="search" size={24} color="white" />
             </View>
             <FlatList
-                data={posts}
+                data={filteredPosts}
                 renderItem={({ item, index }) => {
-                   // const shouldRender = Math.abs(index - currentIndex) <= 2;
                     return (
                         <PostListItem
                             postItem={item}

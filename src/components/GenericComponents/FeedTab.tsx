@@ -1,4 +1,5 @@
 import { TouchableOpacity,  View, Text, StyleSheet } from "react-native";
+import { useState } from "react";
 
 
 type FeedTabProps = {
@@ -8,10 +9,12 @@ type FeedTabProps = {
 }
 
 export default function FeedTab({ title, activeTab, setActiveTab}: FeedTabProps) {
+    const [width, setWidth] = useState(0);
     return (
         <TouchableOpacity
             onPress={() => setActiveTab(title)}
             style={styles.tabContainer}
+            onLayout={(event) => setWidth(event.nativeEvent.layout.width)}
         >
             <Text
                 style={[
@@ -20,7 +23,7 @@ export default function FeedTab({ title, activeTab, setActiveTab}: FeedTabProps)
                 ]}>
                 {title}
             </Text>
-            {activeTab === title && <View style={styles.activeDot} />}
+            {activeTab === title && <View style={[styles.activeDot, { width }]} />}
         </TouchableOpacity>
     )
 }
@@ -38,7 +41,6 @@ const styles = StyleSheet.create({
         color: '#fff',
     },
     activeDot: {
-        width: 72,
         height: 2,
         backgroundColor: '#fff',
         marginTop: 4
