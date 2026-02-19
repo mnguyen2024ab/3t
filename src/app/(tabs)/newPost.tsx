@@ -24,11 +24,10 @@ export default function NewPostScreen() {
     const [isRecording, setIsRecording] = useState<boolean>(false);
     const cameraRef = useRef<CameraView>(null)
     const [micPermission, requestMicPermission] = useMicrophonePermissions();
-    const [recordedUri, setRecordedUri] = useState<string | null>(null);
     const [video, setVideo] = useState<string>();
     const [description, setDescription] = useState<string>('');
 
-    const videoPlayer = useVideoPlayer("https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4", (player) => {
+    const videoPlayer = useVideoPlayer(null, (player) => {
         player.loop = true;
     })
 
@@ -61,22 +60,18 @@ export default function NewPostScreen() {
     const toggleCameraFacing = () => setFacing(facing === 'back' ? 'front' : 'back');
 
     const selectFromGallery = async () => {
-        const {status} = await ImagePicker.requestMediaLibraryPermissionsAsync();
-        if (status !== 'granted') {
-            alert('Sorry, we need camera roll permissions to make this work!');
-            return;
-        }
-
         let result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Videos,
+            mediaTypes: ['videos'],
             allowsEditing: true,
-            quality: 1,
+            aspect: [9, 16],
+
         });
 
-        if (!result.canceled && result.assets && result.assets.length > 0) {
+        if (!result.canceled ) {
             const uri = result.assets[0].uri;
-            setRecordedUri(uri);
-            router.push({pathname: '/(tabs)/newPost', params: {uri}}); // Placeholder for navigation
+            setVideo(uri);
+            await videoPlayer.replaceAsync({ uri })
+            videoPlayer.play();
         }
     }
 
@@ -176,7 +171,7 @@ const renderRecordedVideo = () => {
 };
 return (
     <>
-        { renderRecordedVideo}
+        { video ? renderRecordedVideo() : renderCamera() }
     </>
 )
 }
