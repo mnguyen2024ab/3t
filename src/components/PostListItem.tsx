@@ -10,23 +10,22 @@ type VideoListItemProps = {
     postItem: Post;
     isActive: boolean;
 }
-export default function PostListItem({ postItem, isActive, shouldRender }:  VideoListItemProps & { shouldRender: boolean }) {
+export default function PostListItem({ postItem, isActive }:  VideoListItemProps) {
     const { height } = Dimensions.get('window');
-    const { nrOfComments, nrOfLikes, nrOfShares, description, user, video_url } = postItem;
+    const { nrOfComments, nrOfLikes, nrOfShares, user, video_url, description } = postItem;
 
-    const player = useVideoPlayer(shouldRender ? video_url : null, player => {
+    const player = useVideoPlayer(video_url, player => {
         player.loop = true;
+        player.play();
     });
-
     useFocusEffect(
         useCallback(() => {
-            if (!player || !shouldRender) return;
+            if (!player) return;
 
             try {
                 if (isActive) {
                     player.play()
-                } else {
-                    player.pause()
+
                 }
             } catch (error) {
                 console.log(error);
@@ -34,29 +33,24 @@ export default function PostListItem({ postItem, isActive, shouldRender }:  Vide
 
             return () => {
                 try {
-                    if (player) {
+                    if (player && isActive) {
                         player.pause()
                     }
                 } catch (error) {
                     console.log(error);
                 }
             }
-        }, [isActive, player, shouldRender])
+        }, [isActive, player])
 
     )
-
     return (
         <View style={{ height: height -80 }}>
-            {shouldRender && player ? (
-                <VideoView
-                    style={{ flex: 1 }}
-                    player={player}
-                    contentFit="cover"
-                    //nativeControls={false}
-                />
-            ) : (
-                <View style={{ flex: 1, backgroundColor: 'black' }} />
-            )}
+            <VideoView
+                style={{ flex: 1 }}
+                player={player}
+                contentFit="cover"
+                //nativeControls={false}
+            />
 
           <View style={styles.interactionBar}>
               <TouchableOpacity style={styles.interactionButton} onPress={() => console.log('Like Pressed')} >
@@ -70,12 +64,12 @@ export default function PostListItem({ postItem, isActive, shouldRender }:  Vide
               </TouchableOpacity>
 
               <TouchableOpacity style={styles.interactionButton} onPress={() => console.log('Share Pressed')} >
-                  <Ionicons name="arrow-redo" size={nrOfShares[0]?.count || 0} color="#fff" />
-                  <Text style={styles.interactionText}>0</Text>
+                  <Ionicons name="arrow-redo" size={33} color="#fff" />
+                  <Text style={styles.interactionText}>{nrOfShares[0]?.count || 0}</Text>
               </TouchableOpacity>
 
               <TouchableOpacity style={styles.avatar} onPress={() => console.log('Profile Pressed')}>
-                  <Text style={styles.avatarText}>{user?.username.charAt(0).toUpperCase()}</Text>
+                  <Text style={styles.avatarText}>{user?.username?.charAt(0)?.toUpperCase() || 'U'}</Text>
               </TouchableOpacity>
           </View>
          <View style={styles.videoInfo}>

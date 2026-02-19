@@ -1,4 +1,4 @@
-import { TouchableOpacity, View, Text, StyleSheet } from "react-native";
+import { TouchableOpacity,  View, Text, StyleSheet } from "react-native";
 
 
 type FeedTabProps = {
@@ -38,7 +38,7 @@ const styles = StyleSheet.create({
         color: '#fff',
     },
     activeDot: {
-        width: 20,
+        width: 72,
         height: 2,
         backgroundColor: '#fff',
         marginTop: 4
