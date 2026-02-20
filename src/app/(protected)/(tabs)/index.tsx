@@ -1,9 +1,11 @@
 import { View, FlatList, Dimensions, ViewToken, StyleSheet } from 'react-native';
 import PostListItem from '@components/PostListItem';
 import posts from '@assets/data/posts.json';
-import {useMemo, useRef, useState} from "react";
+import {useEffect, useMemo, useRef, useState} from "react";
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import FeedTab from "@components/GenericComponents/FeedTab";
+import {useAuthStore} from "@/store/useAuthStore";
+import {supabase} from "@/lib/supabase";
 
 const TABS ={
     EXPLORER: 'Explorer',
@@ -15,10 +17,30 @@ export default function HomeScreen() {
     const { height } = Dimensions.get('window');
     const [currentIndex, setCurrentIndex] = useState(0);
     const [activeTab, setActiveTab] = useState(TABS.FOR_YOU);
+    const flatListRef = useRef<FlatList | null>(null);
+    const { user } = useAuthStore();
+    const [followedUserIds, setFollowedUserIds] = useState<Set<string>>(new Set());
+
+    useEffect(() => {
+        const fetchFollows = async () => {
+            if (!user) return;
+            const { data, error } = await supabase
+                .from('follows')
+                .select('following_id')
+                .eq('follower_id', user.id);
+
+            if (!error && data) {
+                setFollowedUserIds(new Set(data.map(f => f.following_id)));
+            }
+        };
+
+        fetchFollows();
+    }, [user]);
 
     const handleSetActiveTab = (newTab: string) => {
         setActiveTab(newTab);
         setCurrentIndex(0);
+        flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
     };
 
     const filteredPosts = useMemo(() => {
@@ -26,11 +48,10 @@ export default function HomeScreen() {
             return posts;
         }
         if (activeTab === TABS.FOLLOWING) {
-            // Placeholder: filter posts by following users (assuming there's a property for this, or just return empty for now)
-            return posts.filter(post => post.user.username === 'danho'); // Example filtering
+            return posts.filter(post => followedUserIds.has(post.user.id));
         }
         return posts;
-    }, [activeTab]);
+    }, [activeTab, followedUserIds]);
 
     const onViewableItemsChanged = useRef(({ viewableItems }: { viewableItems: ViewToken[] }) => {
         if (viewableItems.length > 0 ) {
@@ -50,6 +71,7 @@ export default function HomeScreen() {
                 <Ionicons name="search" size={24} color="white" />
             </View>
             <FlatList
+                ref={flatListRef}
                 data={filteredPosts}
                 renderItem={({ item, index }) => {
                     return (

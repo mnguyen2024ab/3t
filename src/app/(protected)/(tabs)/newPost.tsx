@@ -62,9 +62,6 @@ export default function NewPostScreen() {
     const selectFromGallery = async () => {
         let result = await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ['videos'],
-            allowsEditing: true,
-            aspect: [9, 16],
-
         });
 
         if (!result.canceled ) {

@@ -31,8 +31,8 @@ export const useAuthStore = create<AuthStore>()(
 
                     const newUser: User = {
                         id: user.id,
-                        email: user.email!,
-                        username: user.user_metadata.username
+                        email: user.email || '',
+                        username: user.user_metadata?.username || 'user'
                     }
 
                     set({
@@ -62,13 +62,13 @@ export const useAuthStore = create<AuthStore>()(
 
                     const newUser: User = {
                         id: user.id,
-                        email: user.email!,
-                        username: user.user_metadata.username
+                        email: user.email || '',
+                        username: user.user_metadata?.username || 'user'
                     }
 
                     set({
                         user: newUser,
-                        isAuthenticated: true,
+                        isAuthenticated: !!data.session,
                     })
                 } catch (error) {
                     throw error;
@@ -77,14 +77,14 @@ export const useAuthStore = create<AuthStore>()(
             logout: async () => {
                 const { error } = await supabase.auth.signOut();
 
+                if (error) {
+                    throw error;
+                }
+
                 set({
                     user: null,
                     isAuthenticated: false,
                 })
-
-                if (error) {
-                    throw error;
-                }
             },
         }),
         {
@@ -93,3 +93,28 @@ export const useAuthStore = create<AuthStore>()(
         }
     )
 )
+
+// Listen for Supabase auth state changes and sync with the store
+supabase.auth.onAuthStateChange((event, session) => {
+    if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        if (session?.user) {
+            const newUser: User = {
+                id: session.user.id,
+                email: session.user.email || '',
+                username: session.user.user_metadata?.username || 'user'
+            }
+            useAuthStore.setState({ user: newUser, isAuthenticated: true });
+        }
+    } else if (event === 'SIGNED_OUT') {
+        useAuthStore.setState({ user: null, isAuthenticated: false });
+    } else if (event === 'USER_UPDATED') {
+        if (session?.user) {
+            const newUser: User = {
+                id: session.user.id,
+                email: session.user.email || '',
+                username: session.user.user_metadata?.username || 'user'
+            }
+            useAuthStore.setState({ user: newUser, isAuthenticated: true });
+        }
+    }
+});

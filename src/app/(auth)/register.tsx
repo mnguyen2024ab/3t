@@ -1,17 +1,17 @@
-import {View, Text, StyleSheet, TextInput, TouchableOpacity,Alert, KeyboardAvoidingView, Platform} from 'react-native';
-import {useState} from "react";
-import {Link} from "expo-router";
 import {useAuthStore} from "@/store/useAuthStore";
+import { Link } from "expo-router";
+import { useState } from "react";
+import { Text, View, StyleSheet, TextInput, TouchableOpacity, Alert, KeyboardAvoidingView, Platform } from "react-native";
 
 export default function Register() {
     const [email, setEmail] = useState<string>('');
     const [password, setPassword] = useState<string>('');
     const [username, setUsername] = useState<string>('');
-    const register = useAuthStore((state) => state.register);
     const [isLoading, setLoading] = useState<boolean>(false);
+    const register = useAuthStore((state) => state.register);
 
     const handleRegister = async () => {
-        if (!email || !password ||!username) {
+        if (!email || !password || !username) {
             Alert.alert('Error', 'Please fill in all the fields')
             return;
         }
@@ -31,9 +31,9 @@ export default function Register() {
             behavior={Platform.OS === 'ios' ? 'padding' : undefined}
             style={styles.container}
         >
-        <View style={styles.container}>
             <Text style={styles.title}>Create Account</Text>
             <Text style={styles.subtitle}>Sign up to get started</Text>
+
 
             <TextInput
                 style={styles.input}
@@ -49,6 +49,8 @@ export default function Register() {
                 value={email}
                 onChangeText={setEmail}
                 keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
             />
             <TextInput
                 style={styles.input}
@@ -62,16 +64,16 @@ export default function Register() {
             <TouchableOpacity style={styles.button} onPress={handleRegister} disabled={isLoading}>
                 <Text style={styles.buttonText}>{isLoading ? 'Creating Account...' : 'Create Account'}</Text>
             </TouchableOpacity>
+
             <View style={styles.footer}>
                 <Text style={styles.footerText}>Already have an account? </Text>
                 <Link href={"/login"}>
                     <Text style={styles.linkText}>Sign In</Text>
                 </Link>
             </View>
-        </View>
-       </KeyboardAvoidingView>
+        </KeyboardAvoidingView>
     )
-}
+};
 
 const styles = StyleSheet.create({
     container: {

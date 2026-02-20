@@ -41,6 +41,8 @@ export default function Login() {
                 value={email}
                 onChangeText={setEmail}
                 keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
             />
             <TextInput
                 style={styles.input}
