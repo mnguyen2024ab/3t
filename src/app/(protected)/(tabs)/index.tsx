@@ -16,6 +16,11 @@ export default function HomeScreen() {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [activeTab, setActiveTab] = useState(TABS.FOR_YOU);
 
+    const handleSetActiveTab = (newTab: string) => {
+        setActiveTab(newTab);
+        setCurrentIndex(0);
+    };
+
     const filteredPosts = useMemo(() => {
         if (activeTab === TABS.FOR_YOU) {
             return posts;
@@ -34,13 +39,13 @@ export default function HomeScreen() {
     })
 
     return (
-        <View>
+        <View style={{ flex: 1 }}>
             <View style={styles.topBar}>
                 <MaterialIcons name="live-tv" size={24} color="white" />
                 <View style={styles.navigationBar}>
-                    <FeedTab title={TABS.FOR_YOU} setActiveTab={setActiveTab} activeTab={activeTab} />
-                    <FeedTab title={TABS.EXPLORER} setActiveTab={setActiveTab} activeTab={activeTab} />
-                    <FeedTab title={TABS.FOLLOWING} setActiveTab={setActiveTab} activeTab={activeTab} />
+                    <FeedTab title={TABS.FOR_YOU} setActiveTab={handleSetActiveTab} activeTab={activeTab} />
+                    <FeedTab title={TABS.EXPLORER} setActiveTab={handleSetActiveTab} activeTab={activeTab} />
+                    <FeedTab title={TABS.FOLLOWING} setActiveTab={handleSetActiveTab} activeTab={activeTab} />
                 </View>
                 <Ionicons name="search" size={24} color="white" />
             </View>

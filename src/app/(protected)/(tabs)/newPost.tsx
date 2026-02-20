@@ -77,7 +77,7 @@ export default function NewPostScreen() {
 
     const dismissVideo = () => {
         setVideo(undefined);
-        videoPlayer.release()
+        videoPlayer.pause();
     }
 
     const postVideo = () => {
@@ -91,13 +91,20 @@ export default function NewPostScreen() {
 
     const startRecording = async () => {
         setIsRecording(true);
+        if (!cameraRef.current) {
+            setIsRecording(false);
+            return;
+        }
         try {
-            const recordedVideo = await cameraRef.current?.recordAsync();
+            const recordedVideo = await cameraRef.current.recordAsync();
             if (recordedVideo?.uri) {
                 const uri = recordedVideo.uri;
+                setIsRecording(false);
                 setVideo(uri);
                 await videoPlayer.replaceAsync({ uri })
                 videoPlayer.play();
+            } else {
+                setIsRecording(false);
             }
         } catch (error) {
             console.error("Failed to record video:", error);

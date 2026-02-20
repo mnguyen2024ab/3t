@@ -24,20 +24,21 @@ export const useAuthStore = create<AuthStore>()(
                         password
                     })
 
-                    if (data && data.user && !error) {
-                        const { user } = data;
+                    if (error) throw error;
+                    if (!data.user) throw new Error("Login failed: User data is missing");
 
-                        const newUser: User = {
-                            id: user.id,
-                            email: user.email!,
-                            username: user.user_metadata.username
-                        }
+                    const { user } = data;
 
-                        set({
-                            user: newUser,
-                            isAuthenticated: true,
-                        })
+                    const newUser: User = {
+                        id: user.id,
+                        email: user.email!,
+                        username: user.user_metadata.username
                     }
+
+                    set({
+                        user: newUser,
+                        isAuthenticated: true,
+                    })
                 } catch (error) {
                     throw error;
                 }
@@ -54,20 +55,21 @@ export const useAuthStore = create<AuthStore>()(
                         }
                     })
 
-                    if (data && data.user && !error) {
-                        const { user } = data;
+                    if (error) throw error;
+                    if (!data.user) throw new Error("Registration failed: User data is missing");
 
-                        const newUser: User = {
-                            id: user.id,
-                            email: user.email!,
-                            username: user.user_metadata.username
-                        }
+                    const { user } = data;
 
-                        set({
-                            user: newUser,
-                            isAuthenticated: true,
-                        })
+                    const newUser: User = {
+                        id: user.id,
+                        email: user.email!,
+                        username: user.user_metadata.username
                     }
+
+                    set({
+                        user: newUser,
+                        isAuthenticated: true,
+                    })
                 } catch (error) {
                     throw error;
                 }
@@ -75,11 +77,13 @@ export const useAuthStore = create<AuthStore>()(
             logout: async () => {
                 const { error } = await supabase.auth.signOut();
 
-                if (!error) {
-                    set({
-                        user: null,
-                        isAuthenticated: false,
-                    })
+                set({
+                    user: null,
+                    isAuthenticated: false,
+                })
+
+                if (error) {
+                    throw error;
                 }
             },
         }),
