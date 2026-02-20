@@ -1,9 +1,9 @@
 import { View, Text } from 'react-native';
 
-export default function NewPost() {
+export default function Register() {
     return (
         <View>
-            <Text>Hello</Text>
+            <Text>Register</Text>
         </View>
     )
 }
