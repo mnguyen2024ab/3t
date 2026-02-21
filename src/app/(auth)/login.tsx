@@ -30,7 +30,6 @@ export default function Login() {
             behavior={Platform.OS === 'ios' ? 'padding' : undefined}
             style={styles.container}
         >
-        <View style={styles.container}>
             <Text style={styles.title}>Welcome Back</Text>
             <Text style={styles.subtitle}>Sign in to your account</Text>
 
@@ -61,7 +60,6 @@ export default function Login() {
                 <Text style={styles.linkText}>Sign Up</Text>
             </Link>
           </View>
-        </View>
         </KeyboardAvoidingView>
     )
 }

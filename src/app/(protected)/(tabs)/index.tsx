@@ -1,11 +1,10 @@
-import { View, FlatList, Dimensions, ViewToken, StyleSheet } from 'react-native';
+import {View, Text, FlatList, Dimensions, ViewToken, StyleSheet, ActivityIndicator} from 'react-native';
 import PostListItem from '@components/PostListItem';
-import posts from '@assets/data/posts.json';
-import {useEffect, useMemo, useRef, useState} from "react";
+import {useRef, useState} from "react";
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import FeedTab from "@components/GenericComponents/FeedTab";
-import {useAuthStore} from "@/store/useAuthStore";
-import {supabase} from "@/lib/supabase";
+import {useInfiniteQuery, useQuery} from "@tanstack/react-query";
+import {fetchPosts} from "@/services/posts";
 
 const TABS ={
     EXPLORER: 'Explorer',
@@ -17,41 +16,22 @@ export default function HomeScreen() {
     const { height } = Dimensions.get('window');
     const [currentIndex, setCurrentIndex] = useState(0);
     const [activeTab, setActiveTab] = useState(TABS.FOR_YOU);
-    const flatListRef = useRef<FlatList | null>(null);
-    const { user } = useAuthStore();
-    const [followedUserIds, setFollowedUserIds] = useState<Set<string>>(new Set());
 
-    useEffect(() => {
-        const fetchFollows = async () => {
-            if (!user) return;
-            const { data, error } = await supabase
-                .from('follows')
-                .select('following_id')
-                .eq('follower_id', user.id);
+   const { data, isLoading, error, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
+       queryKey:['posts'],
+       queryFn: ({pageParam}) => fetchPosts(pageParam),
+       initialPageParam: { limit: 3, cursor: undefined },
+       getNextPageParam: (lastPage, allPages) => {
+           if(lastPage.length === 0) {
+               return undefined;
+           }
 
-            if (!error && data) {
-                setFollowedUserIds(new Set(data.map(f => f.following_id)));
-            }
-        };
-
-        fetchFollows();
-    }, [user]);
-
-    const handleSetActiveTab = (newTab: string) => {
-        setActiveTab(newTab);
-        setCurrentIndex(0);
-        flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
-    };
-
-    const filteredPosts = useMemo(() => {
-        if (activeTab === TABS.FOR_YOU) {
-            return posts;
-        }
-        if (activeTab === TABS.FOLLOWING) {
-            return posts.filter(post => followedUserIds.has(post.user.id));
-        }
-        return posts;
-    }, [activeTab, followedUserIds]);
+           return {
+               limit: 3,
+               cursor: lastPage[lastPage.length -1].id,
+           }
+       }
+   })
 
     const onViewableItemsChanged = useRef(({ viewableItems }: { viewableItems: ViewToken[] }) => {
         if (viewableItems.length > 0 ) {
@@ -59,20 +39,33 @@ export default function HomeScreen() {
         }
     })
 
+    if (isLoading) {
+        return (
+            <ActivityIndicator size={"large"} style={{ flex: 1, justifyContent: 'center'}} />
+        )
+    }
+
+    if (error) {
+        return (
+            <View style={{ flex: 1, justifyContent: 'center'}}>
+                <Text style={{ color: '#fff', fontWeight: 'bold', textAlign: 'center', fontSize: 18}}>Error fetching posts</Text>
+            </View>
+        )
+    }
+
     return (
         <View style={{ flex: 1 }}>
             <View style={styles.topBar}>
                 <MaterialIcons name="live-tv" size={24} color="white" />
                 <View style={styles.navigationBar}>
-                    <FeedTab title={TABS.FOR_YOU} setActiveTab={handleSetActiveTab} activeTab={activeTab} />
-                    <FeedTab title={TABS.EXPLORER} setActiveTab={handleSetActiveTab} activeTab={activeTab} />
-                    <FeedTab title={TABS.FOLLOWING} setActiveTab={handleSetActiveTab} activeTab={activeTab} />
+                    <FeedTab title={TABS.FOR_YOU} setActiveTab={setActiveTab} activeTab={activeTab} />
+                    <FeedTab title={TABS.EXPLORER} setActiveTab={setActiveTab} activeTab={activeTab} />
+                    <FeedTab title={TABS.FOLLOWING} setActiveTab={setActiveTab} activeTab={activeTab} />
                 </View>
                 <Ionicons name="search" size={24} color="white" />
             </View>
             <FlatList
-                ref={flatListRef}
-                data={filteredPosts}
+                data={data || []}
                 renderItem={({ item, index }) => {
                     return (
                         <PostListItem
@@ -87,7 +80,9 @@ export default function HomeScreen() {
                 snapToInterval={height - 80}
                 decelerationRate={"fast"}
                 disableIntervalMomentum
+                keyExtractor={(item) => item.id.toString()}
                 onViewableItemsChanged={onViewableItemsChanged.current}
+                viewabilityConfig={{itemVisiblePercentThreshold: 50}}
             />
         </View>
     )

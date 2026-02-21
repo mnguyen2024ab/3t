@@ -6,7 +6,7 @@ import {
     TouchableOpacity,
     TextInput,
     KeyboardAvoidingView,
-    Platform
+    Platform, Alert
 } from 'react-native';
 import { CameraView, CameraType, useCameraPermissions, useMicrophonePermissions } from 'expo-camera';
 import {useEffect, useRef, useState} from "react";
@@ -16,19 +16,53 @@ import { router } from 'expo-router';
 import {useVideoPlayer, VideoView} from "expo-video";
 import {SafeAreaView} from "react-native-safe-area-context";
 import * as ImagePicker from 'expo-image-picker';
+import {useMutation, useQueryClient} from "@tanstack/react-query";
+import {useAuthStore} from "@/store/useAuthStore";
+import * as FileSystem from 'expo-file-system';
+import { createPost, uploadVideoToStorage } from "@/services/posts";
 
 
 export default function NewPostScreen() {
     const [facing, setFacing] = useState<CameraType>('back');
     const [permission, requestPermission] = useCameraPermissions();
     const [isRecording, setIsRecording] = useState<boolean>(false);
-    const cameraRef = useRef<CameraView>(null)
+
+    const cameraRef = useRef<CameraView>(null);
+    const queryClient = useQueryClient();
+
     const [micPermission, requestMicPermission] = useMicrophonePermissions();
     const [video, setVideo] = useState<string>();
     const [description, setDescription] = useState<string>('');
+    const user = useAuthStore((state) => state.user);
 
     const videoPlayer = useVideoPlayer(null, (player) => {
         player.loop = true;
+    })
+
+    const { mutate: createNewPost, isPending } = useMutation({
+        mutationFn: async ({ video, description }: { video: string, description: string }) => {
+           const fileExtension = video.split('.').pop() || 'mp4';
+           const fileName = `${user?.id}/${Date.now()}.${fileExtension}`;
+
+           const file = new FileSystem.File(video);
+           const fileBuffer = await file.bytes();
+
+           if (user) {
+           const videoUrl = await uploadVideoToStorage({ fileName, fileExtension, fileBuffer });
+               await createPost({video_url: videoUrl, description, user_id: user?.id});
+           }
+           },
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: ['posts'] });
+          videoPlayer.release();
+          setDescription('');
+          setVideo('');
+          router.replace('/');
+        },
+
+        onError: () => {
+            Alert.alert('Error', 'Failed to create post. Please try again')
+        }
     })
 
     useEffect(() => {
@@ -62,6 +96,8 @@ export default function NewPostScreen() {
     const selectFromGallery = async () => {
         let result = await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ['videos'],
+            allowsEditing: true,
+            aspect: [9, 16],
         });
 
         if (!result.canceled ) {
@@ -74,11 +110,15 @@ export default function NewPostScreen() {
 
     const dismissVideo = () => {
         setVideo(undefined);
-        videoPlayer.pause();
+        videoPlayer.release();
     }
 
     const postVideo = () => {
-
+       if (!video) {
+           Alert.alert('Error', 'Please record a video first')
+           return;
+       }
+       createNewPost({ video, description });
     }
 
     const stopRecording = () => {
@@ -88,24 +128,12 @@ export default function NewPostScreen() {
 
     const startRecording = async () => {
         setIsRecording(true);
-        if (!cameraRef.current) {
-            setIsRecording(false);
-            return;
-        }
-        try {
-            const recordedVideo = await cameraRef.current.recordAsync();
-            if (recordedVideo?.uri) {
-                const uri = recordedVideo.uri;
-                setIsRecording(false);
-                setVideo(uri);
-                await videoPlayer.replaceAsync({ uri })
-                videoPlayer.play();
-            } else {
-                setIsRecording(false);
-            }
-        } catch (error) {
-            console.error("Failed to record video:", error);
-            setIsRecording(false);
+        const recordedVideo = await cameraRef.current?.recordAsync();
+        if (recordedVideo?.uri) {
+            const uri = recordedVideo.uri
+            setVideo(uri);
+            await videoPlayer.replaceAsync({uri})
+            videoPlayer.play();
         }
     };
 

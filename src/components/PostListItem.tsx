@@ -12,7 +12,7 @@ type VideoListItemProps = {
 }
 export default function PostListItem({ postItem, isActive }:  VideoListItemProps) {
     const { height } = Dimensions.get('window');
-    const { nrOfComments, nrOfLikes, nrOfShares, user, video_url, description } = postItem;
+    const { nrOfComments, user, video_url, description } = postItem;
 
     const player = useVideoPlayer(video_url, player => {
         player.loop = true;
@@ -50,7 +50,7 @@ export default function PostListItem({ postItem, isActive }:  VideoListItemProps
           <View style={styles.interactionBar}>
               <TouchableOpacity style={styles.interactionButton} onPress={() => console.log('Like Pressed')} >
                  <Ionicons name="heart" size={33} color="#fff" />
-                 <Text style={styles.interactionText}>{nrOfLikes[0]?.count || 0}</Text>
+                 <Text style={styles.interactionText}>{0}</Text>
               </TouchableOpacity>
 
               <TouchableOpacity style={styles.interactionButton} onPress={() => console.log('Comment Pressed')}>
@@ -60,7 +60,7 @@ export default function PostListItem({ postItem, isActive }:  VideoListItemProps
 
               <TouchableOpacity style={styles.interactionButton} onPress={() => console.log('Share Pressed')} >
                   <Ionicons name="arrow-redo" size={33} color="#fff" />
-                  <Text style={styles.interactionText}>{nrOfShares[0]?.count || 0}</Text>
+                  <Text style={styles.interactionText}>{0}</Text>
               </TouchableOpacity>
 
               <TouchableOpacity style={styles.avatar} onPress={() => console.log('Profile Pressed')}>

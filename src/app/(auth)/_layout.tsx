@@ -1,16 +1,12 @@
-import { useAuthStore } from "@/store/useAuthStore";
-import { Redirect, Stack } from "expo-router";
+
+import {  Stack, Redirect } from "expo-router";
+import {useAuthStore} from "@/store/useAuthStore";
 
 export default function AuthLayout() {
-    const hasHydrated = useAuthStore.persist.hasHydrated();
-    const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-
-    if (!hasHydrated) {
-        return null;
-    }
+   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
     if (isAuthenticated) {
-        return <Redirect href={"/"} />
+        return <Redirect href="/" />
     }
 
     return (
